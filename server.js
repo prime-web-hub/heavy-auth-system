@@ -6,8 +6,13 @@ const cors = require('cors');
 
 const app = express();
 
-// 🔓 CORS ને ઓપન રાખીએ જેથી કનેક્શન ફેલ ન થાય
-app.use(cors({ origin: '*' })); 
+// 🔓 સર્વર કનેક્શનની બધી જ મર્યાદાઓ હટાવી દીધી જેથી એરર ન આવે
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 const loginLimiter = rateLimit({
@@ -17,6 +22,11 @@ const loginLimiter = rateLimit({
 });
 
 const usersDB = [];
+
+// મેઈન રુટ પર મેસેજ જેથી ખબર પડે સર્વર ચાલુ છે
+app.get('/', (req, res) => {
+    res.json({ status: "Live", message: "Heavy Security Auth Server is running perfectly!" });
+});
 
 app.post('/api/signup', async (req, res) => {
     try {
@@ -54,6 +64,5 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     }
 });
 
-// રેન્ડર સર્વર માટે પોર્ટ સેટિંગ
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🛡️ Server running on port ${PORT}`));
