@@ -1,68 +1,82 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const argon2 = require('argon2');
-const rateLimit = require('express-rate-limit');
-const cors = require('cors'); 
+const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
-
-// 🔓 સર્વર કનેક્શનની બધી જ મર્યાદાઓ હટાવી દીધી જેથી એરર ન આવે
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
 app.use(express.json());
+app.use(cors()); 
 
-const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    max: 100, 
-    message: { error: "Too many attempts. Please try again later." }
-});
+const usersStore = []; 
+const otpStore = {}; 
 
-const usersDB = [];
-
-// મેઈન રુટ પર મેસેજ જેથી ખબર પડે સર્વર ચાલુ છે
-app.get('/', (req, res) => {
-    res.json({ status: "Live", message: "Heavy Security Auth Server is running perfectly!" });
-});
-
-app.post('/api/signup', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const userExists = usersDB.find(u => u.email === email);
-        if (userExists) return res.status(400).json({ error: "Email already registered." });
-
-        const hashedPassword = await argon2.hash(password);
-        usersDB.push({ email, password: hashedPassword });
-
-        res.status(201).json({ success: true, message: "User registered securely!" });
-    } catch (error) {
-        res.status(500).json({ error: "Server error during signup." });
+// ⚠️ जरूरी काम: यहाँ अपनी असली Gmail आईडी और 'App Password' सेट करें
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'YOUR_GMAIL@gmail.com',         // अपनी असली जीमेल आईडी लिखें
+        pass: 'YOUR_GMAIL_APP_PASSWORD'     // गूगल से जनरेट किया हुआ 16 अक्षरों का App Password
     }
 });
 
-app.post('/api/login', loginLimiter, async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = usersDB.find(u => u.email === email);
-        if (!user) return res.status(401).json({ error: "Invalid Credentials" });
+// 1. साइनअप एंडपॉइंट
+app.post('/signup', (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "सभी फ़ील्ड ज़रूरी हैं।" });
 
-        const validPassword = await argon2.verify(user.password, password);
-        if (!validPassword) return res.status(401).json({ error: "Invalid Credentials" });
+    const userExists = usersStore.find(u => u.email === email);
+    if (userExists) return res.status(400).json({ error: "यह ईमेल पहले से रजिस्टर्ड है।" });
 
-        const token = jwt.sign(
-            { email: user.email }, 
-            'SUPER_HEAVY_SECRET_KEY_123_@#$', 
-            { expiresIn: '1h' }
-        );
+    usersStore.push({ email, password });
+    res.status(201).json({ message: "अकाउंट सफलतापूर्वक बन गया है!" });
+});
 
-        res.status(200).json({ success: true, token, message: "Logged in securely!" });
-    } catch (error) {
-        res.status(500).json({ error: "Server error during login." });
+// 2. साधारण पासवर्ड लॉगिन एंडपॉइंट
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+    const user = usersStore.find(u => u.email === email && u.password === password);
+
+    if (user) {
+        res.json({ message: "लॉगिन सफल रहा!", token: "sample-jwt-token-123" });
+    } else {
+        res.status(400).json({ error: "गलत ईमेल या पासवर्ड।" });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🛡️ Server running on port ${PORT}`));
+// 3. ईमेल पर OTP भेजने का एंडपॉइंट
+app.post('/send-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "ईमेल आईडी जरूरी है।" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email] = otp; 
+
+    const mailOptions = {
+        from: '"Secure Auth System" <YOUR_GMAIL@gmail.com>',
+        to: email,
+        subject: 'आपका लॉगिन OTP कोड',
+        text: `आपका सुरक्षित लॉगिन ओटीपी (OTP) है: ${otp}. यह केवल 5 मिनट के लिए मान्य है.`
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.json({ message: "OTP आपकी ईमेल पर भेज दिया गया है।" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "ईमेल भेजने में सर्वर में एरर आया।" });
+    }
+});
+
+// 4. यूजर के OTP को वेरिफाई करने का एंडपॉइंट
+app.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (otpStore[email] && otpStore[email] === otp) {
+        delete otpStore[email]; 
+        res.json({ message: "OTP सफलतापूर्वक वेरिफाई हो गया!", token: "sample-jwt-token-456" });
+    } else {
+        res.status(400).json({ error: "गलत या एक्सपायर हो चुका OTP।" });
+    }
+});
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
