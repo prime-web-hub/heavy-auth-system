@@ -1,46 +1,181 @@
-async function loginWithMobile() {
-    const emailForOTP = prompt("OTP प्राप्त करने के लिए अपनी ईमेल आईडी डालें:");
-    if (!emailForOTP) return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Super Secure Auth System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); width: 100%; max-width: 400px; text-align: center; border: 1px solid #334155; }
+        h2 { margin-bottom: 1.5rem; color: #38bdf8; font-size: 1.8rem; }
+        .input-group { margin-bottom: 1.2rem; text-align: left; }
+        label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+        input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 1rem; }
+        input:focus { outline: none; border-color: #38bdf8; }
+        .btn-primary { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
+        .btn-primary:hover { background: #0ea5e9; }
+        
+        .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #64748b; font-size: 0.85rem; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #334155; }
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+        
+        .social-btn { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-bottom: 0.8rem; transition: 0.2s; text-decoration: none; }
+        .btn-facebook { background: #1877f2; color: white; }
+        .btn-facebook:hover { background: #166fe5; }
+        .btn-mobile { background: #22c55e; color: white; }
+        .btn-mobile:hover { background: #16a34a; }
 
+        .switch-text { margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8; }
+        .switch-text span { color: #38bdf8; cursor: pointer; text-decoration: underline; }
+        #message { margin-top: 1rem; font-size: 0.9rem; font-weight: bold; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 id="form-title">🛡️ Create Account</h2>
+    <form id="auth-form">
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="email" required placeholder="name@gmail.com">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-primary" id="submit-btn">Register Securely</button>
+    </form>
+
+    <div class="divider">OR CONTINUE WITH</div>
+    
+    <button class="social-btn btn-facebook" onclick="loginWithFacebook()">
+        🔵 Continue with Facebook
+    </button>
+    <button class="social-btn btn-mobile" onclick="loginWithEmailOTP()">
+        📩 Login with Email OTP
+    </button>
+
+    <div id="message"></div>
+    <p class="switch-text" id="switch-container">
+        Already have an account? <span id="switch-mode">Login here</span>
+    </p>
+</div>
+
+<script>
+    // ⚠️ जब आप Render पर अपना बैकएंड लाइव कर लें, तब "http://localhost:5000" हटाकर अपनी Render URL यहाँ डाल देना।
+    const API_URL = "http://localhost:5000";
+    
+    let isLoginMode = false;
+    const form = document.getElementById('auth-form');
+    const formTitle = document.getElementById('form-title');
+    const submitBtn = document.getElementById('submit-btn');
+    const switchMode = document.getElementById('switch-mode');
+    const switchContainer = document.getElementById('switch-container');
     const messageDiv = document.getElementById('message');
-    messageDiv.innerText = "ईमेल पर OTP भेजा जा रहा है...";
-    messageDiv.className = "";
 
-    try {
-        const response = await fetch(`${API_URL}/send-otp`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: emailForOTP })
-        });
+    switchMode.addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        if (isLoginMode) {
+            formTitle.innerText = "🔑 User Login";
+            submitBtn.innerText = "Login Securely";
+            switchContainer.innerHTML = "New here? <span id='switch-mode'>Create an account</span>";
+        } else {
+            formTitle.innerText = "🛡️ Create Account";
+            submitBtn.innerText = "Register Securely";
+            switchContainer.innerHTML = "Already have an account? <span id='switch-mode'>Login here</span>";
+        }
+        messageDiv.innerText = "";
+        document.getElementById('switch-mode').addEventListener('click', () => switchMode.click());
+    });
 
-        const data = await response.json();
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        messageDiv.innerText = "Connecting to Secure Server...";
+        messageDiv.className = "";
 
-        if (response.ok) {
-            const userOTP = prompt("आपकी ईमेल पर 6-अंकों का OTP भेजा गया है। कृपया यहाँ डालें:");
-            if (!userOTP) return;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const endpoint = isLoginMode ? `${API_URL}/login` : `${API_URL}/signup`;
 
-            // अब OTP वेरिफाई करने के लिए बैकएंड को भेजें
-            const verifyRes = await fetch(`${API_URL}/verify-otp`, {
+        try {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailForOTP, otp: userOTP })
+                body: JSON.stringify({ email, password })
             });
 
-            const verifyData = await verifyRes.json();
-            if (verifyRes.ok) {
-                messageDiv.innerText = "लॉगिन सफल रहा! (Email OTP Verified)";
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.innerText = data.message;
                 messageDiv.className = "success";
-                if(verifyData.token) localStorage.setItem('authToken', verifyData.token);
+                if(isLoginMode && data.token) {
+                    localStorage.setItem('authToken', data.token);
+                }
+                form.reset();
             } else {
-                messageDiv.innerText = verifyData.error || "गलत OTP डाला गया है।";
+                messageDiv.innerText = data.error || "Authentication failed";
                 messageDiv.className = "error";
             }
-        } else {
-            messageDiv.innerText = data.error || "OTP भेजने में विफलता।";
+        } catch (error) {
+            messageDiv.innerText = "Server connection failed. Make sure Backend is Live.";
             messageDiv.className = "error";
         }
-    } catch (error) {
-        messageDiv.innerText = "सर्वर से कनेक्शन नहीं हो पाया।";
-        messageDiv.className = "error";
+    });
+
+    async function loginWithEmailOTP() {
+        const emailForOTP = prompt("OTP प्राप्त करने के लिए अपनी ईमेल आईडी डालें:");
+        if (!emailForOTP) return;
+
+        messageDiv.innerText = "ईमेल पर OTP भेजा जा रहा है...";
+        messageDiv.className = "";
+
+        try {
+            const response = await fetch(`${API_URL}/send-otp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: emailForOTP })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const userOTP = prompt("आपकी ईमेल पर 6-अंकों का OTP भेजा गया है। कृपया यहाँ दर्ज करें:");
+                if (!userOTP) return;
+
+                const verifyRes = await fetch(`${API_URL}/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailForOTP, otp: userOTP })
+                });
+
+                const verifyData = await verifyRes.json();
+                if (verifyRes.ok) {
+                    messageDiv.innerText = "लॉगिन सफल रहा! (Email OTP Verified)";
+                    messageDiv.className = "success";
+                    if(verifyData.token) localStorage.setItem('authToken', verifyData.token);
+                } else {
+                    messageDiv.innerText = verifyData.error || "गलत OTP डाला गया है।";
+                    messageDiv.className = "error";
+                }
+            } else {
+                messageDiv.innerText = data.error || "OTP भेजने में विफलता आई।";
+                messageDiv.className = "error";
+            }
+        } catch (error) {
+            messageDiv.innerText = "सर्वर से कनेक्शन नहीं हो पाया।";
+            messageDiv.className = "error";
+        }
     }
-}
+
+    function loginWithFacebook() {
+        alert("Redirecting to Facebook Secure Login...");
+    }
+</script>
+
+</body>
+</html>
