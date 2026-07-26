@@ -1,14 +1,13 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const argon2 = require('argon2');
-const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const cors = require('cors'); // 👈 CORS સિક્યોરિટી ટૂલ ઉમેર્યું
+const cors = require('cors'); 
 
 const app = express();
 
-app.use(cors()); // 👈 આ લાઈન ફ્રન્ટએન્ડ અને બેકએન્ડ વચ્ચેનું કનેક્શન પાકું કરશે
-app.use(helmet());
+// 🔓 CORS ને ઓપન રાખીએ જેથી કનેક્શન ફેલ ન થાય
+app.use(cors({ origin: '*' })); 
 app.use(express.json());
 
 const loginLimiter = rateLimit({
@@ -55,4 +54,6 @@ app.post('/api/login', loginLimiter, async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log('🛡️ Heavy Security Server running on port 3000'));
+// રેન્ડર સર્વર માટે પોર્ટ સેટિંગ
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🛡️ Server running on port ${PORT}`));
