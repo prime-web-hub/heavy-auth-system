@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ Super Secure Auth System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-content: center; align-items: center; min-height: 100vh; }
+        .card { background: #1e293b; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); width: 100%; max-width: 400px; text-align: center; border: 1px solid #334155; }
+        h2 { margin-bottom: 1.5rem; color: #38bdf8; font-size: 1.8rem; }
+        .input-group { margin-bottom: 1.2rem; text-align: left; }
+        label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+        input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 1rem; }
+        input:focus { outline: none; border-color: #38bdf8; }
+        button { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
+        button:hover { background: #0ea5e9; }
+        .switch-text { margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8; }
+        .switch-text span { color: #38bdf8; cursor: pointer; text-decoration: underline; }
+        #message { margin-top: 1rem; font-size: 0.9rem; font-weight: bold; }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 id="form-title">🛡️ Create Account</h2>
+    <form id="auth-form">
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="email" required placeholder="name@example.com">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" required placeholder="••••••••">
+        </div>
+        <button type="submit" id="submit-btn">Register Securely</button>
+    </form>
+    <div id="message"></div>
+    <p class="switch-text" id="switch-container">
+        Already have an account? <span id="switch-mode">Login here</span>
+    </p>
+</div>
+
+<script>
+    // 🔗 आपकी Render की लाइव लिंक (सॉफ्टवेयर का पता)
+    const API_URL = "https://onrender.com";
+    
+    let isLoginMode = false;
+    const form = document.getElementById('auth-form');
+    const formTitle = document.getElementById('form-title');
+    const submitBtn = document.getElementById('submit-btn');
+    const switchMode = document.getElementById('switch-mode');
+    const switchContainer = document.getElementById('switch-container');
+    const messageDiv = document.getElementById('message');
+
+    // लॉगिन और साइनअप मोड बदलने के लिए
+    switchMode.addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        if (isLoginMode) {
+            formTitle.innerText = "🔑 User Login";
+            submitBtn.innerText = "Login Securely";
+            switchContainer.innerHTML = "New here? <span id='switch-mode'>Create an account</span>";
+        } else {
+            formTitle.innerText = "🛡️ Create Account";
+            submitBtn.innerText = "Register Securely";
+            switchContainer.innerHTML = "Already have an account? <span id='switch-mode'>Login here</span>";
+        }
+        messageDiv.innerText = "";
+        // नए स्पैन पर इवेंट फिर से जोड़ना
+        document.getElementById('switch-mode').addEventListener('click', () => switchMode.click());
+    });
+
+    // बटन दबाने पर डेटा भेजने का काम
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        messageDiv.innerText = "Processing...";
+        messageDiv.className = "";
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        // सही रास्ता चुनना (/signup या /login)
+        const endpoint = isLoginMode ? `${API_URL}/login` : `${API_URL}/signup`;
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.innerText = data.message;
+                messageDiv.className = "success";
+                if(isLoginMode && data.token) {
+                    // लॉगिन होने पर टोकन को संभाल कर रखना
+                    localStorage.setItem('authToken', data.token);
+                }
+                form.reset();
+            } else {
+                messageDiv.innerText = data.error || "Something went wrong";
+                messageDiv.className = "error";
+            }
+        } catch (error) {
+            messageDiv.innerText = "Server connection failed.";
+            messageDiv.className = "error";
+        }
+    });
+</script>
+
+</body>
+</html>
+
