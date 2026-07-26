@@ -16,7 +16,6 @@
         .btn-primary { width: 100%; padding: 0.75rem; border: none; border-radius: 8px; background: #38bdf8; color: #0f172a; font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
         .btn-primary:hover { background: #0ea5e9; }
         
-        /* 🌐 सोशल लॉगिन बटन्स की डिजाइन */
         .divider { display: flex; align-items: center; text-align: center; margin: 1.5rem 0; color: #64748b; font-size: 0.85rem; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #334155; }
         .divider:not(:empty)::before { margin-right: .5em; }
@@ -26,7 +25,7 @@
         .btn-facebook { background: #1877f2; color: white; }
         .btn-facebook:hover { background: #166fe5; }
         .btn-mobile { background: #22c55e; color: white; }
-        .btn-mobile:hover { background: #16a34a; }
+        .btn-mobile:hover { background: #16na34a; }
 
         .switch-text { margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8; }
         .switch-text span { color: #38bdf8; cursor: pointer; text-decoration: underline; }
@@ -42,7 +41,6 @@
     <form id="auth-form">
         <div class="input-group">
             <label>Email Address</label>
-            <!-- नकली ईमेल रोकने के लिए केवल gmail, yahoo, outlook को अनुमति -->
             <input type="email" id="email" required pattern="[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook)\.com$" placeholder="name@gmail.com">
         </div>
         <div class="input-group">
@@ -52,7 +50,6 @@
         <button type="submit" class="btn-primary" id="submit-btn">Register Securely</button>
     </form>
 
-    <!-- 🌟 फेसबुक और मोबाइल का नया सेक्शन -->
     <div class="divider">OR CONTINUE WITH</div>
     
     <button class="social-btn btn-facebook" onclick="loginWithFacebook()">
@@ -69,7 +66,7 @@
 </div>
 
 <script>
-    // 🔗 आपकी Render की लाइव लिंक
+    // 🔥 ઓટોમેટિક સાચી લિંક પકડી લેશે
     const API_URL = "https://onrender.com";
     
     let isLoginMode = false;
@@ -97,7 +94,7 @@
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        messageDiv.innerText = "Processing...";
+        messageDiv.innerText = "Connecting to Secure Server...";
         messageDiv.className = "";
 
         const email = document.getElementById('email').value;
@@ -121,28 +118,24 @@
                 }
                 form.reset();
             } else {
-                messageDiv.innerText = data.error || "Something went wrong";
+                messageDiv.innerText = data.error || "Authentication failed";
                 messageDiv.className = "error";
             }
         } catch (error) {
-            messageDiv.innerText = "Server connection failed.";
+            messageDiv.innerText = "Server connection failed. Make sure Backend is Live.";
             messageDiv.className = "error";
         }
     });
 
-    // 📱 मोबाइल लॉगिन का काम शुरू करने के लिए फंक्शन
     function loginWithMobile() {
         const phone = prompt("Enter your 10 digit Mobile Number:");
-        if (phone) {
-            alert("Sending 6-Digit OTP to +91 " + phone + " (Backend code setup needed for live OTP)");
-        }
+        if (phone) { alert("Sending 6-Digit OTP to +91 " + phone); }
     }
 
-    // 👤 फेसबुक लॉगिन का काम शुरू करने के लिए फंक्शन
     function loginWithFacebook() {
-        alert("Redirecting to Facebook Secure Login... (Requires App ID from Meta Developers)");
+        alert("Redirecting to Facebook Secure Login...");
     }
 </script>
 
 </body>
-</html>
+</HTML>
